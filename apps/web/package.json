@@ -9,7 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "preact": "^10.13.1"
+    "@mantine/core": "^6.0.8",
+    "@mantine/form": "^6.0.8",
+    "@tabler/icons-react": "^2.17.0",
+    "@zaunapp/client": "^1.1.2",
+    "preact": "^10.13.1",
+    "preact-router": "^4.1.0",
+    "react-router": "^6.10.0",
+    "react-router-dom": "^6.10.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.5.0",
