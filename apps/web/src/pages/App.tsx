@@ -4,6 +4,7 @@ import {
 	Box,
 	Burger,
 	Center,
+	Container,
 	Group,
 	Header,
 	Indicator,
@@ -11,6 +12,7 @@ import {
 	MediaQuery,
 	Navbar,
 	ScrollArea,
+	Stack,
 	Text,
 	Textarea,
 	ThemeIcon,
@@ -160,12 +162,18 @@ export function App() {
 	const theme = useMantineTheme();
 	const [opened, setOpened] = useState(false);
 	const [logged, setLogged] = useState(false);
+	const [currentChannel, setCurrentChannel] = useState("");
+	const [fmessages, setFmessages] = useState(true);
 	const [debug, setDebug] = useState("Welcome to Zaun chat!");
+	const [error, setError] = useState("");
 	const client = useClient();
+
+	const [textAreaContent, setTextAreaContent] = useState("");
 
 	const [channels, setChannels] = useState<Channel[]>([]);
 	const [messages, setMessages] = useState<Message[]>([]);
 
+	const [waitSending, setWaitSending] = useState(false);
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token) {
@@ -176,7 +184,10 @@ export function App() {
 			console.log(msg);
 			setDebug(msg);
 		});
-		client.on("error", console.error);
+		client.on("error", (err) => {
+			setError(err as any);
+			console.error(err);
+		});
 		client.login(token).catch(() => {
 			window.location.href = "/login";
 		});
@@ -185,17 +196,34 @@ export function App() {
 	useEffect(() => {
 		client.once("ready", async () => {
 			const channels = Array.from(client.channels.cache.values());
+			setChannels(channels);
+			setLogged(true);
 			const channel = channels[0];
+			setCurrentChannel(channel.id);
 			if (channel) {
 				if (channel.isGroup()) {
 					const messages = await channel.messages.fetch();
 					setMessages(Array.from(messages.values()));
-					setChannels(channels);
+					setFmessages(false);
 				}
 			}
-			setLogged(true);
 		});
 	}, []);
+
+	const handleKeypress = async (e: any) => {
+		if (e.keyCode === 13) {
+			const channel = client.channels.cache.get(currentChannel);
+			if (channel?.isText()) {
+				setTextAreaContent("");
+				setWaitSending(true);
+				try {
+					await channel.send(textAreaContent);
+					setMessages(Array.from(channel.messages.cache.values()));
+				} catch (err) {}
+				setWaitSending(false);
+			}
+		}
+	};
 
 	if (!logged) {
 		return (
@@ -211,10 +239,13 @@ export function App() {
 			</Center>
 		);
 	}
+
 	return (
 		<AppShell
 			styles={{
 				main: {
+					minHeight: "100%",
+					minWidth: "100%",
 					background:
 						theme.colorScheme === "dark"
 							? theme.colors.dark[8]
@@ -261,55 +292,63 @@ export function App() {
 				</Header>
 			}
 		>
-			<div
-				style={{
-					height: "100%",
-					width: "100%",
-					display: "flex",
-					flexDirection: "column",
-				}}
-			>
-				<div
-					style={{
-						height: "100%",
-						width: "100%",
-						display: "flex",
-						flexDirection: "column",
-						gap: "16px",
-					}}
-				>
-					{messages.map((message) => (
-						<MessageContainer message={message} />
-					))}
-				</div>
-				<div style={{ width: "100%" }}>
-					<Textarea
-						placeholder="Your comment"
-						withAsterisk
-						autosize
-						minRows={2}
-						maxRows={4}
-					/>
-				</div>
-			</div>
+			<Stack sx={{ height: "90vh" }}>
+				<ScrollArea scrollbarSize={10}>
+					<Stack spacing="xl">
+						{!fmessages ? (
+							messages.map((message) => (
+								<MessageContainer message={message} />
+							))
+						) : (
+							<Center
+							grow
+								style={{
+									height: "90vh",
+									flexDirection: "column",
+								}}
+							>
+								<Loader variant="dots" />
+								<br />
+								{error ? error : debug}
+							</Center>
+						)}
+					</Stack>
+				</ScrollArea>
+
+				<Textarea
+					onChange={(ev: any) =>
+						setTextAreaContent(ev.currentTarget.value)
+					}
+					onKeyPress={handleKeypress}
+					value={textAreaContent}
+					disabled={fmessages || waitSending}
+					placeholder="Your comment"
+					withAsterisk
+					autosize
+					minRows={2}
+					maxRows={4}
+				/>
+			</Stack>
 		</AppShell>
 	);
 }
 function MessageContainer({ message }: { message: Message }) {
 	return (
 		<Text>
-			<UserAvatar message={message} />
-			<Text
-				span
-				variant="gradient"
-				gradient={{ from: "indigo", to: "cyan", deg: 45 }}
-				sx={{ fontFamily: "Greycliff CF, sans-serif" }}
-				fz="xl"
-				fw={700}
-			>
-				{message.author.username}:
-			</Text>{" "}
-			{message.content}
+			<Center inline>
+				<UserAvatar message={message} />
+				<Text
+					span
+					variant="gradient"
+					gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+					sx={{ fontFamily: "Greycliff CF, sans-serif" }}
+					fz="xl"
+					fw={700}
+				>
+					{message.author.username}:
+				</Text>{" "}
+			</Center>
+			<Text span>{message.content}</Text>
 		</Text>
 	);
 }
