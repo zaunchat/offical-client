@@ -1,14 +1,9 @@
 import {
 	AppShell,
-	Aside,
 	Avatar,
 	Box,
 	Burger,
 	Center,
-	Container,
-	Flex,
-	Footer,
-	Grid,
 	Group,
 	Header,
 	Indicator,
@@ -24,9 +19,9 @@ import {
 	useMantineTheme,
 } from "@mantine/core";
 import { IconChevronRight, IconChevronLeft } from "@tabler/icons-react";
-import { Channel, Client, Message } from "@zaunapp/client";
-import { ChannelManager } from "@zaunapp/client/dist/managers";
+import { Channel, Message } from "@zaunapp/client";
 import { useEffect, useState } from "preact/hooks";
+import { useClient } from "../utils";
 
 export function User() {
 	const client = useClient();
@@ -146,7 +141,7 @@ export function Channels({ channels }: { channels: Channel[] }) {
 	return <div>{cs}</div>;
 }
 
-function Demo({ message }: { message: Message }) {
+function UserAvatar({ message }: { message: Message }) {
 	return (
 		<Indicator
 			inline
@@ -160,16 +155,12 @@ function Demo({ message }: { message: Message }) {
 		</Indicator>
 	);
 }
-const client = new Client();
-function useClient() {
-	return client;
-}
 
 export function App() {
 	const theme = useMantineTheme();
 	const [opened, setOpened] = useState(false);
 	const [logged, setLogged] = useState(false);
-	const [debug, setDebug] = useState('Welcome to Zaun chat!');
+	const [debug, setDebug] = useState("Welcome to Zaun chat!");
 	const client = useClient();
 
 	const [channels, setChannels] = useState<Channel[]>([]);
@@ -189,7 +180,6 @@ export function App() {
 		client.login(token).catch(() => {
 			window.location.href = "/login";
 		});
-
 	}, []);
 
 	useEffect(() => {
@@ -212,7 +202,7 @@ export function App() {
 			<Center
 				style={{
 					height: "100%",
-					flexDirection: "column"
+					flexDirection: "column",
 				}}
 			>
 				<Loader />
@@ -306,10 +296,9 @@ export function App() {
 	);
 }
 function MessageContainer({ message }: { message: Message }) {
-	const client = useClient();
 	return (
 		<Text>
-			<Demo message={message} />
+			<UserAvatar message={message} />
 			<Text
 				span
 				variant="gradient"
