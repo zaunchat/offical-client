@@ -4,6 +4,7 @@ import {
 	Avatar,
 	Box,
 	Burger,
+	Center,
 	Container,
 	Flex,
 	Footer,
@@ -11,6 +12,7 @@ import {
 	Group,
 	Header,
 	Indicator,
+	Loader,
 	MediaQuery,
 	Navbar,
 	ScrollArea,
@@ -167,6 +169,7 @@ export function App() {
 	const theme = useMantineTheme();
 	const [opened, setOpened] = useState(false);
 	const [logged, setLogged] = useState(false);
+	const [debug, setDebug] = useState('Welcome to Zaun chat!');
 	const client = useClient();
 
 	const [channels, setChannels] = useState<Channel[]>([]);
@@ -178,9 +181,15 @@ export function App() {
 			window.location.href = "/login";
 			return;
 		}
+		client.on("debug", (msg) => {
+			console.log(msg);
+			setDebug(msg);
+		});
+		client.on("error", console.error);
 		client.login(token).catch(() => {
 			window.location.href = "/login";
 		});
+
 	}, []);
 
 	useEffect(() => {
@@ -194,13 +203,23 @@ export function App() {
 					setChannels(channels);
 				}
 			}
-
 			setLogged(true);
 		});
 	}, []);
 
 	if (!logged) {
-		return <div>Loading</div>;
+		return (
+			<Center
+				style={{
+					height: "100%",
+					flexDirection: "column"
+				}}
+			>
+				<Loader />
+				<br />
+				{debug.replace(/\[(.*?)\]:/g, "")}
+			</Center>
+		);
 	}
 	return (
 		<AppShell

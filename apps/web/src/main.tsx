@@ -22,7 +22,7 @@ export function Main() {
 		<MantineProvider
 			withNormalizeCSS
 			withGlobalStyles
-			theme={{ colorScheme: "dark" }}
+			theme={{ colorScheme: "dark", loader: "bars" }}
 		>
 			<RouterProvider router={router} />
 		</MantineProvider>
